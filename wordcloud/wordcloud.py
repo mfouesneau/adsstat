@@ -7,7 +7,7 @@ from PIL import ImageDraw
 from PIL import ImageFont
 
 import numpy as np
-from query_integral_image import query_integral_image
+from .query_integral_image import query_integral_image
 
 # Some default files
 import os

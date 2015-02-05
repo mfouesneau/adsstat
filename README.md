@@ -13,6 +13,7 @@ Version history
 ---------------
     v1.0: initial version
     v2.0: added word cloud figure (requires running make, auto-fallback)
+    v3.0: python 3 compatible
 
 
 Example usage

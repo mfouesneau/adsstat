@@ -23,19 +23,35 @@ Example usage:
     #make wordcloud
     >>> r.show_word_cloud()  # take a while depending on the abstract data
 """
+from __future__ import print_function
 
 __author__ = 'M. Fouesneau'
 __version__ = '2.0'
 
-import urllib
 import xml.etree.cElementTree as ET
 import numpy as np
 import pylab as plt
 
+import sys
+import operator
+
+if sys.version_info[0] > 2:
+    py3k = True
+    from urllib.request import urlopen
+    iteritems = operator.methodcaller('items')
+    iterkeys = operator.methodcaller('keys')
+    itervalues = operator.methodcaller('values')
+else:
+    py3k = False
+    from urllib2 import urlopen
+    iteritems = operator.methodcaller('iteritems')
+    iterkeys = operator.methodcaller('iterkeys')
+    itervalues = operator.methodcaller('itervalues')
+
 try:
     import wordcloud
 except ImportError:
-    worldcloud = None
+    wordcloud = None
 
 __all__ = ['ezrc', 'Paper', 'Query', 'WordCloud']
 
@@ -62,7 +78,6 @@ def ezrc(fontSize=16., lineWidth=2., labelSize=None, tickmajorsize=10, tickminor
     rcParams['ytick.minor.size'] = tickminorsize
     rcParams['font.sans-serif'] = 'Helvetica'
     rcParams['font.serif'] = 'Helvetica'
-    rcParams['text.latex.preamble'] = '\usepackage{pslatex}'
 
 
 class Paper(object):
@@ -253,7 +268,7 @@ class Query(object):
             ax.set_axis_off()
             plt.draw_if_interactive()
         else:
-            print self.worldcloud.words.most_common(20)
+            print(self.worldcloud.words.most_common(20))
 
     def _build_query(self, author, nmax=None, yrmin=None, yrmax=None):
         """ generate the query with all pieces of information """
@@ -280,7 +295,7 @@ class Query(object):
 
     def _query(self, url):
         """ make the query """
-        f = urllib.urlopen(url)
+        f = urlopen(url)
         data = ET.parse(f)
         f.close()
         return data
@@ -569,8 +584,13 @@ class WordCloud(object):
 
     def find_tags(self):
 
-        #clean symbols and numbers
-        self.words = re.sub('[_:;,?.!()"~+-/*<>^1234567890]', ' ', self.txt.replace('\n', ' ')).lower()
+        # clean symbols and numbers
+        if py3k:
+            self.words = re.sub('[_:;,?.!()"~+-/*<>^1234567890]', ' ',
+                                self.txt.decode('utf8').replace('\n', ' ')).lower()
+        else:
+            self.words = re.sub('[_:;,?.!()"~+-/*<>^1234567890]', ' ',
+                                self.txt.replace('\n', ' ')).lower()
 
         # get rid of the common words in english
         if self.filter_common is True:
@@ -595,7 +615,7 @@ class WordCloud(object):
             self.similar_words = d
 
             cc = {}
-            for wk, lst in d.iteritems():
+            for wk, lst in iteritems(d):
                 cc[wk] = sum(self.words.count(lstk) for lstk in lst)
             self.words = Counter(cc)
         else:
@@ -603,6 +623,6 @@ class WordCloud(object):
 
     def make_image(self, **kwargs):
         if wordcloud is not None:
-            k = np.asarray(self.words.keys())
-            v = np.asarray(self.words.values())
+            k = np.asarray(list(self.words.keys()))
+            v = np.asarray(list(self.words.values()))
             self.image = wordcloud.make_wordcloud(k, v, **kwargs)
